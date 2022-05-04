@@ -19,6 +19,7 @@ def handle_transaction(transaction_event):
                 'metadata': {
                     'block_number': transaction_event.block_number,
                     'tx_hash': transaction_event.hash,
+                    'from': transaction_event.from_,
                     'highest_gas_previous_block': last_block_highest,
                     'gas_price': gas_now,
                     'percentage': f'{(gas_now-last_block_highest)/last_block_highest:.2f}'
