@@ -7,8 +7,6 @@ BLOCK_START = 2
 GAS_HISTORY = []
 SAVE_DATA = [155.0]
 
-data = [0]
-
 def handle_transaction(transaction_event):
     findings = []
     
@@ -50,9 +48,6 @@ def handle_transaction(transaction_event):
             
             SAVE_DATA.append(gas_now)
             
-            data[0] +=1
-            
-        print(data[0])
     return findings
 
 def get_highest_gas():
