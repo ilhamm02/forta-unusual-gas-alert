@@ -1,35 +1,101 @@
+import math, statistics
 from forta_agent import Finding, FindingType, FindingSeverity
 
-LAST_BLOCK = [0]
-GAS_CHECK = []
+LIMIT_BLOCK = 10
+BLOCK_START = 2
+
+GAS_HISTORY = []
+SAVE_DATA = [155.0]
+
+data = [0]
 
 def handle_transaction(transaction_event):
     findings = []
     
-    if len(GAS_CHECK) > 0:
-        last_block_highest = max(GAS_CHECK)
-        gas_now = transaction_event.gas_price/10**9
-        if gas_now > last_block_highest+(last_block_highest*50/100):
+    gas_now = float(f'{transaction_event.gas_price/10**9:.2f}')
+    block_number = transaction_event.block_number
+    
+    if len(GAS_HISTORY) == 0:
+        GAS_HISTORY.append([[block_number, gas_now]])
+    else:
+        if GAS_HISTORY[-1][0][0] == block_number:
+            GAS_HISTORY[-1].append([block_number, gas_now])
+        else:
+            insert_save_data()
+            GAS_HISTORY.append([[block_number, gas_now]])
+        
+    while len(GAS_HISTORY) > LIMIT_BLOCK+1:
+        del GAS_HISTORY[0]
+        
+    if len(GAS_HISTORY) > BLOCK_START:
+        highest_gas_list = get_highest_gas()
+        if gas_now > max(highest_gas_list[:-1])+(max(highest_gas_list[:-1])*50/100):
             findings.append(Finding({
                 'name': "Tremendous increase in gas price",
-                'description': f'The increase in gas price is {(gas_now-last_block_highest)/last_block_highest*100:.2f}% greater than the previous block.',
+                'description': f'A large increase in gas prices from the previous block..',
                 'alert_id': "GAS-DETECT-TCD",
-                'severity': FindingSeverity.Info,
                 'type': FindingType.Suspicious,
+                'severity': get_severity(gas_now, highest_gas_list),
                 'metadata': {
                     'block_number': transaction_event.block_number,
                     'tx_hash': transaction_event.hash,
                     'from': transaction_event.from_,
-                    'highest_gas_previous_block': last_block_highest,
-                    'gas_price': gas_now,
-                    'percentage': f'{(gas_now-last_block_highest)/last_block_highest:.2f}'
-                }
+                    'gas_price': gas_now
+                },
+                'addresses': [
+                    transaction_event.from_,
+                    transaction_event.to
+                ]
             }))
             
-    if transaction_event.block.number > LAST_BLOCK[0]:
-        LAST_BLOCK[0] = transaction_event.block.number
-        GAS_CHECK.clear()
-    else:
-        GAS_CHECK.append(transaction_event.gas_price/10**9)
-        
+            SAVE_DATA.append(gas_now)
+            
+            data[0] +=1
+            
+        print(data[0])
     return findings
+
+def get_highest_gas():
+    chart = []
+    
+    for lists in GAS_HISTORY:
+        gas_list = []
+        for gas in lists:
+            gas_list.append(math.ceil(gas[1]/10)*10)
+        chart.append(max(gas_list))
+        
+    return chart
+
+def insert_save_data():
+    temp_data = []
+    if len(SAVE_DATA) > 0:
+        block_number = GAS_HISTORY[-1][0][0]
+        for data in SAVE_DATA:
+            gas_price = data
+            if data < 1000:
+                gas_price = math.floor(data/50)
+            else:
+                gas_price = math.floor(data/100)
+            temp_data.append(gas_price)
+    
+        temp_mode = statistics.mode(temp_data)
+        count = 0
+        
+        for data in temp_data:
+            if data > temp_mode:
+                GAS_HISTORY[-1].append([block_number, SAVE_DATA[count]])
+            count += 1
+            
+def get_severity(now, list):
+    max_gas = max(list[:-1])
+    print(max_gas)
+    if now > max_gas+(max_gas*50/100):
+        severity = FindingSeverity.Low
+        if now > max_gas+(max_gas*70/100):
+            severity = FindingSeverity.Low
+        if now > max_gas+(max_gas*100/100):
+            severity = FindingSeverity.Medium
+        if now > max_gas+(max_gas*20/100):
+            severity = FindingSeverity.High
+        
+    return severity
