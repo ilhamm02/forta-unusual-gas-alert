@@ -2,10 +2,10 @@ import math, statistics
 from forta_agent import Finding, FindingType, FindingSeverity
 
 LIMIT_BLOCK = 10
-BLOCK_START = 2
+BLOCK_START = 5
 
 GAS_HISTORY = []
-SAVE_DATA = [155.0]
+SAVE_DATA = []
 
 def handle_transaction(transaction_event):
     findings = []
