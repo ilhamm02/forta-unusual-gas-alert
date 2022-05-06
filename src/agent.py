@@ -30,7 +30,7 @@ def handle_transaction(transaction_event):
         if gas_now > max(highest_gas_list[:-1])+(max(highest_gas_list[:-1])*50/100):
             findings.append(Finding({
                 'name': "Tremendous increase in gas price",
-                'description': f'A large increase in gas prices from the previous block..',
+                'description': f'A large increase in gas prices from the previous block.',
                 'alert_id': "GAS-DETECT-TCD",
                 'type': FindingType.Suspicious,
                 'severity': get_severity(gas_now, highest_gas_list),
@@ -77,13 +77,12 @@ def insert_save_data():
         count = 0
         
         for data in temp_data:
-            if data > temp_mode:
+            if data < temp_mode:
                 GAS_HISTORY[-1].append([block_number, SAVE_DATA[count]])
             count += 1
             
 def get_severity(now, list):
     max_gas = max(list[:-1])
-    print(max_gas)
     if now > max_gas+(max_gas*50/100):
         severity = FindingSeverity.Info
         if now > max_gas+(max_gas*70/100):
