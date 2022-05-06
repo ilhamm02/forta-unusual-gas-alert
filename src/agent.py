@@ -85,12 +85,12 @@ def get_severity(now, list):
     max_gas = max(list[:-1])
     print(max_gas)
     if now > max_gas+(max_gas*50/100):
-        severity = FindingSeverity.Low
+        severity = FindingSeverity.Info
         if now > max_gas+(max_gas*70/100):
             severity = FindingSeverity.Low
         if now > max_gas+(max_gas*100/100):
             severity = FindingSeverity.Medium
-        if now > max_gas+(max_gas*20/100):
+        if now > max_gas+(max_gas*200/100):
             severity = FindingSeverity.High
         
     return severity
