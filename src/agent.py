@@ -7,8 +7,6 @@ GAS_HISTORY = []
 SAVE_DATA = []
 HIGHEST_GAS_LIST = []
 
-test = []
-
 def handle_block(block_event):
     findings = []
     
@@ -34,7 +32,6 @@ def handle_block(block_event):
     while len(GAS_HISTORY) > BLOCK_LIMIT+1:
         del GAS_HISTORY[0]
         
-    print(test)
     return findings
 
 def handle_transaction(transaction_event):
@@ -54,6 +51,10 @@ def handle_transaction(transaction_event):
             if gas_now > HIGHEST_GAS_LIST[-1]:
                 rise_percentage = gas_now - HIGHEST_GAS_LIST[-1]/gas_now*100
                 if rise_percentage > MIN_PERCENTAGE:
+                    addresses = []
+                    for address in transaction_event.addresses:
+                        addresses.append(address)
+                        
                     findings.append(Finding({
                         'name': "Tremendous increase in gas price",
                         'description': f'A large increase in gas prices from the previous block.',
@@ -67,12 +68,9 @@ def handle_transaction(transaction_event):
                             'gas_price': gas_now
                         },
                         'addresses': [
-                            transaction_event.from_,
-                            transaction_event.to
+                            addresses
                         ]
                     }))
-                    
-                    test.append(transaction_event.hash)
                     
         if len(findings) == 0:
             block_index = 0
@@ -97,13 +95,11 @@ def update_highest_gas():
             for gas in lists["gas_price"]:
                 gas_list.append(math.ceil(gas/10)*10)
                 
-            print(f'update: {gas_list}')
             HIGHEST_GAS_LIST.append(max(gas_list))
         
 def insert_save_data():
     temp_data = []
     if len(SAVE_DATA) > 0:
-        print(f'save: {SAVE_DATA}')
         for data in SAVE_DATA:
             if data["block_number"] == GAS_HISTORY[-1]["block_number"]:
                 temp_gas = data["gas_price"]
@@ -113,7 +109,6 @@ def insert_save_data():
                     temp_gas = math.floor(data["gas_price"]/100)
                 temp_data.append(temp_gas)
                 
-        print(f'insert: {temp_data}')
         temp_mode = statistics.mean(temp_data)
         data_index = 0
         

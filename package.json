@@ -5,7 +5,11 @@
   "chainIds": [
     1,
     137,
-    43114
+    43114,
+    10,
+    42161,
+    56,
+    250
   ],
   "scripts": {
     "postinstall": "python3 -m pip install -r requirements_dev.txt",
