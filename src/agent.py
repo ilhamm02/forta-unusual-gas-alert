@@ -8,8 +8,6 @@ GAS_HISTORY = []
 SAVE_DATA = []
 HIGHEST_GAS_LIST = []
 
-test = []
-
 def handle_block(block_event):
     findings = []
     
@@ -34,8 +32,7 @@ def handle_block(block_event):
     
     while len(GAS_HISTORY) > BLOCK_LIMIT+1:
         del GAS_HISTORY[0]
-
-    print(test)
+        
     return findings
 
 def handle_transaction(transaction_event):
@@ -72,8 +69,6 @@ def handle_transaction(transaction_event):
                             transaction_event.to
                         ]
                     }))
-                    
-                    test.append(transaction_event.hash)
                     
         if len(findings) == 0:
             block_index = 0
@@ -113,7 +108,8 @@ def insert_save_data():
         temp_mode = statistics.mode(temp_data)
         
         for data in temp_data:
-            GAS_HISTORY[-1]["gas_price"].append(data)
+            if data < temp_mode:
+                GAS_HISTORY[-1]["gas_price"].append(data)
             
         
 def get_severity(gas_now, rise_percentage, min_percentage):
