@@ -8,6 +8,8 @@ GAS_HISTORY = []
 SAVE_DATA = []
 HIGHEST_GAS_LIST = []
 
+test = []
+
 def handle_block(block_event):
     findings = []
     
@@ -33,6 +35,7 @@ def handle_block(block_event):
     while len(GAS_HISTORY) > BLOCK_LIMIT+1:
         del GAS_HISTORY[0]
         
+    print(test)
     return findings
 
 def handle_transaction(transaction_event):
@@ -70,6 +73,8 @@ def handle_transaction(transaction_event):
                         ]
                     }))
                     
+                    test.append(transaction_event.hash)
+                    
         if len(findings) == 0:
             block_index = 0
             while GAS_HISTORY[block_index]["block_number"] != block_number:
@@ -88,14 +93,18 @@ def update_highest_gas():
     HIGHEST_GAS_LIST.clear()
     
     for lists in GAS_HISTORY:
-        gas_list = []
-        for gas in lists["gas_price"]:
-            gas_list.append(math.ceil(gas/10)*10)
-        HIGHEST_GAS_LIST.append(max(gas_list))
+        if len(lists["gas_price"]) > 0:
+            gas_list = []
+            for gas in lists["gas_price"]:
+                gas_list.append(math.ceil(gas/10)*10)
+                
+            print(f'update: {gas_list}')
+            HIGHEST_GAS_LIST.append(max(gas_list))
         
 def insert_save_data():
     temp_data = []
     if len(SAVE_DATA) > 0:
+        print(f'save: {SAVE_DATA}')
         for data in SAVE_DATA:
             if data["block_number"] == GAS_HISTORY[-1]["block_number"]:
                 temp_gas = data["gas_price"]
@@ -104,13 +113,16 @@ def insert_save_data():
                 else:
                     temp_gas = math.floor(data["gas_price"]/100)
                 temp_data.append(temp_gas)
-        
-        temp_mode = statistics.mode(temp_data)
+                
+        print(f'insert: {temp_data}')
+        temp_mode = statistics.mean(temp_data)
+        data_index = 0
         
         for data in temp_data:
-            if data < temp_mode:
-                GAS_HISTORY[-1]["gas_price"].append(data)
-            
+            if data <= temp_mode:
+                GAS_HISTORY[-1]["gas_price"].append(GAS_HISTORY[-1]["gas_price"][data_index])
+    
+    SAVE_DATA.clear()
         
 def get_severity(gas_now, rise_percentage, min_percentage):
     severity = FindingSeverity.Info
