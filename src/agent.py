@@ -8,6 +8,8 @@ GAS_HISTORY = []
 SAVE_DATA = []
 HIGHEST_GAS_LIST = []
 
+test = []
+
 def handle_block(block_event):
     findings = []
     
@@ -32,7 +34,8 @@ def handle_block(block_event):
     
     while len(GAS_HISTORY) > BLOCK_LIMIT+1:
         del GAS_HISTORY[0]
-        
+
+    print(test)
     return findings
 
 def handle_transaction(transaction_event):
@@ -69,6 +72,8 @@ def handle_transaction(transaction_event):
                             transaction_event.to
                         ]
                     }))
+                    
+                    test.append(transaction_event.hash)
                     
         if len(findings) == 0:
             block_index = 0

@@ -1,9 +1,11 @@
 {
-  "name": "forta-agent-starter",
-  "version": "0.0.1",
-  "description": "Forta Agent Python starter project",
+  "name": "unusual-gas-alert",
+  "version": "0.0.3",
+  "description": "Gas price monitoring forForta",
   "chainIds": [
-    1
+    1,
+    137,
+    43114
   ],
   "scripts": {
     "postinstall": "python3 -m pip install -r requirements_dev.txt",
