@@ -67,9 +67,7 @@ def handle_transaction(transaction_event):
                             'from': transaction_event.from_,
                             'gas_price': gas_now
                         },
-                        'addresses': [
-                            addresses
-                        ]
+                        'addresses': addresses
                     }))
                     
         if len(findings) == 0:
