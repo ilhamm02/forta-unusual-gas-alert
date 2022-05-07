@@ -1,95 +1,134 @@
 import math, statistics
+from turtle import clear
 from forta_agent import Finding, FindingType, FindingSeverity
 
-LIMIT_BLOCK = 10
-BLOCK_START = 5
+BLOCK_LIMIT = 2
 
 GAS_HISTORY = []
 SAVE_DATA = []
+HIGHEST_GAS_LIST = []
+
+def handle_block(block_event):
+    findings = []
+    
+    block_number = block_event.block_number
+    total_transactions = len(block_event.block.transactions)
+    
+    if len(GAS_HISTORY) == 0:
+        GAS_HISTORY.append({
+            'block_number': block_number,
+            'total_transactions': total_transactions,
+            'gas_price': []
+        })
+    else:
+        if block_number > GAS_HISTORY[-1]["block_number"]:
+            insert_save_data()
+            update_highest_gas()
+            GAS_HISTORY.append({
+                'block_number': block_number,
+                'total_transactions': total_transactions,
+                'gas_price': []
+            })
+    
+    while len(GAS_HISTORY) > BLOCK_LIMIT+1:
+        del GAS_HISTORY[0]
+        
+    return findings
 
 def handle_transaction(transaction_event):
     findings = []
     
-    gas_now = float(f'{transaction_event.gas_price/10**9:.2f}')
-    block_number = transaction_event.block_number
-    
-    if len(GAS_HISTORY) == 0:
-        GAS_HISTORY.append([[block_number, gas_now]])
-    else:
-        if GAS_HISTORY[-1][0][0] == block_number:
-            GAS_HISTORY[-1].append([block_number, gas_now])
-        else:
-            insert_save_data()
-            GAS_HISTORY.append([[block_number, gas_now]])
+    if len(GAS_HISTORY) > 0 and transaction_event.block_number <= GAS_HISTORY[-1]["block_number"] and transaction_event.block_number >= GAS_HISTORY[0]["block_number"]:
+        gas_now = float(f'{transaction_event.gas_price/10**9:.2f}')
+        block_number = transaction_event.block_number
         
-    while len(GAS_HISTORY) > LIMIT_BLOCK+1:
-        del GAS_HISTORY[0]
+        if len(GAS_HISTORY) > 2:
+            MIN_PERCENTAGE = 50
+            if HIGHEST_GAS_LIST[-1] > HIGHEST_GAS_LIST[-2]:
+                prev_rise_percentage = HIGHEST_GAS_LIST[-1] - HIGHEST_GAS_LIST[-2]/HIGHEST_GAS_LIST[-1]*100
+                if prev_rise_percentage > 50:
+                    MIN_PERCENTAGE = prev_rise_percentage
+            
+            if gas_now > HIGHEST_GAS_LIST[-1]:
+                rise_percentage = gas_now - HIGHEST_GAS_LIST[-1]/gas_now*100
+                if rise_percentage > MIN_PERCENTAGE:
+                    findings.append(Finding({
+                        'name': "Tremendous increase in gas price",
+                        'description': f'A large increase in gas prices from the previous block.',
+                        'alert_id': "GAS-DETECT-TCD",
+                        'type': FindingType.Suspicious,
+                        'severity': get_severity(gas_now, rise_percentage, MIN_PERCENTAGE),
+                        'metadata': {
+                            'block_number': block_number,
+                            'tx_hash': transaction_event.hash,
+                            'from': transaction_event.from_,
+                            'gas_price': gas_now
+                        },
+                        'addresses': [
+                            transaction_event.from_,
+                            transaction_event.to
+                        ]
+                    }))
+                    
+                    test.append(transaction_event.hash)
+                    
+        if len(findings) == 0:
+            block_index = 0
+            while GAS_HISTORY[block_index]["block_number"] != block_number:
+                block_index += 1
+                
+            GAS_HISTORY[block_index]["gas_price"].append(gas_now)
+        else: 
+            SAVE_DATA.append({
+                'block_number': block_number,
+                'gas_price': gas_now
+            })
         
-    if len(GAS_HISTORY) > BLOCK_START:
-        highest_gas_list = get_highest_gas()
-        if gas_now > max(highest_gas_list[:-1])+(max(highest_gas_list[:-1])*50/100):
-            findings.append(Finding({
-                'name': "Tremendous increase in gas price",
-                'description': f'A large increase in gas prices from the previous block.',
-                'alert_id': "GAS-DETECT-TCD",
-                'type': FindingType.Suspicious,
-                'severity': get_severity(gas_now, highest_gas_list),
-                'metadata': {
-                    'block_number': transaction_event.block_number,
-                    'tx_hash': transaction_event.hash,
-                    'from': transaction_event.from_,
-                    'gas_price': gas_now
-                },
-                'addresses': [
-                    transaction_event.from_,
-                    transaction_event.to
-                ]
-            }))
-            
-            SAVE_DATA.append(gas_now)
-            
     return findings
 
-def get_highest_gas():
-    chart = []
+def update_highest_gas():
+    HIGHEST_GAS_LIST.clear()
     
     for lists in GAS_HISTORY:
         gas_list = []
-        for gas in lists:
-            gas_list.append(math.ceil(gas[1]/10)*10)
-        chart.append(max(gas_list))
+        for gas in lists["gas_price"]:
+            gas_list.append(math.ceil(gas/10)*10)
+        HIGHEST_GAS_LIST.append(max(gas_list))
         
-    return chart
-
 def insert_save_data():
     temp_data = []
     if len(SAVE_DATA) > 0:
-        block_number = GAS_HISTORY[-1][0][0]
         for data in SAVE_DATA:
-            gas_price = data
-            if data < 1000:
-                gas_price = math.floor(data/50)
-            else:
-                gas_price = math.floor(data/100)
-            temp_data.append(gas_price)
-    
+            if data["block_number"] == GAS_HISTORY[-1]["block_number"]:
+                temp_gas = data["gas_price"]
+                if data["gas_price"] < 1000:
+                    temp_gas = math.floor(data["gas_price"]/50)
+                else:
+                    temp_gas = math.floor(data["gas_price"]/100)
+                temp_data.append(temp_gas)
+        
         temp_mode = statistics.mode(temp_data)
-        count = 0
         
         for data in temp_data:
-            if data < temp_mode:
-                GAS_HISTORY[-1].append([block_number, SAVE_DATA[count]])
-            count += 1
+            GAS_HISTORY[-1]["gas_price"].append(data)
             
-def get_severity(now, list):
-    max_gas = max(list[:-1])
-    if now > max_gas+(max_gas*50/100):
-        severity = FindingSeverity.Info
-        if now > max_gas+(max_gas*70/100):
-            severity = FindingSeverity.Low
-        if now > max_gas+(max_gas*100/100):
-            severity = FindingSeverity.Medium
-        if now > max_gas+(max_gas*200/100):
-            severity = FindingSeverity.High
         
+def get_severity(gas_now, rise_percentage, min_percentage):
+    severity = FindingSeverity.Info
+    if min_percentage < 100:
+        if rise_percentage > min_percentage:
+            severity = FindingSeverity.Low
+        if rise_percentage > 150:
+            severity = FindingSeverity.Medium
+        if rise_percentage > 200:
+            severity = FindingSeverity.High
+    
+    if min_percentage > 100:
+        if rise_percentage > min_percentage*1.3:
+            severity = FindingSeverity.Low
+        if rise_percentage > min_percentage*7:
+            severity = FindingSeverity.Medium
+        if rise_percentage > min_percentage*2:
+            severity = FindingSeverity.High
+    
     return severity
