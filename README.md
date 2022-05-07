@@ -2,7 +2,7 @@
 
 ## Description
 
-This agency monitors all transactions on Ethereum to detect unusual gas prices by comparing from previous blocks. This bot is live on Forta with agent hash `0x563020223474e0b4d4219459335cddee627d729e7305d0195ebfded3ed190de3`
+This agency monitors all transactions on Ethereum to detect unusual gas prices by comparing from previous blocks. This bot is live on Forta with agent hash `0x0d37655e02536081721672ce27fecb6d26754bf63597aa5c9d024a1bdf0e3a82`
 
 ## Supported Chains
 
@@ -12,13 +12,12 @@ This agency monitors all transactions on Ethereum to detect unusual gas prices b
 
 - GAS-DETECT-TCD
   - Works if bot received more than 5 blocks
-  - Triggered when a transaction has a `gas_price` exceeding 50% of the highest `gas_price` in the previous block.
+  - Triggered when a transaction has a `gas_price` exceeding more than 50% of the highest `gas_price` in the previous block.
   - Type is always Suspicious
   - Severity level depends on the percentage of the current `gas_price` with the previous block.
-    - Info if the percentage is more than 50
-    - Low if the percentage is more than 70
-    - Medium is percentage is more than 100
-    - Hight is percentage is more than 200
+    - Low if the rise percentage of the transaction more than 50% from the previous block or 1.3x from the increase in gas in the previous 2 blocks
+    - Medium if the rise percentage of the transaction more than 150% from the previous block or 1.7x from the increase in gas in the previous 2 blocks
+    - Low if the rise percentage of the transaction more than 200% from the previous block or 2x from the increase in gas in the previous 2 blocks
   - Metadata value:
     - `block_number` is the block number of the transaction
     - `tx_hash` is the hash of the transaction
@@ -26,46 +25,46 @@ This agency monitors all transactions on Ethereum to detect unusual gas prices b
     - `gas_price` is the gas price of the transaction in GWEI
 
 ## Test
-The test is done by letting the bot run and get the first 5 blocks and the bot can record all transactions in each block and give an alarm if needed.
+Testing is done by letting the bot run and getting 2 blocks as reference data
 
 ## Test Data
 ```
-{
+1 findings for transaction 0x827cf75f6996afb2765326dc35e2d2dd4303d9e0b9b20d78c6d764c0070f65bb {
   "name": "Tremendous increase in gas price",
-  "description": "A large increase in gas prices from the previous block..",
+  "description": "A large increase in gas prices from the previous block.",
+  "alertId": "GAS-DETECT-TCD",
+  "protocol": "ethereum",
+  "severity": "Low",
+  "type": "Suspicious",
+  "metadata": {
+    "block_number": 14729988,
+    "tx_hash": "0x827cf75f6996afb2765326dc35e2d2dd4303d9e0b9b20d78c6d764c0070f65bb",
+    "from": "0x1938a448d105d26c40a52a1bfe99b8ca7a745ad0",
+    "gas_price": 120.62
+  },
+  "addresses": [
+    "0x1938a448d105d26c40a52a1bfe99b8ca7a745ad0",
+    "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72"
+  ]
+}
+```
+```
+1 findings for transaction 0xc7f43c970398674f35eafc26df1944d8082e265acafd670be85b95c41f974633 {
+  "name": "Tremendous increase in gas price",
+  "description": "A large increase in gas prices from the previous block.",
   "alertId": "GAS-DETECT-TCD",
   "protocol": "ethereum",
   "severity": "High",
   "type": "Suspicious",
   "metadata": {
-    "block_number": 14725879,
-    "tx_hash": "0xa6d0b7aefeb8cfb508b5d1034f199682337eeac9353482ca212f74799a04e716",
-    "from": "0x3462d4f128e214f09a5483ab2613fbf13cd4e57e",
-    "gas_price": 777
+    "block_number": 14729988,
+    "tx_hash": "0xc7f43c970398674f35eafc26df1944d8082e265acafd670be85b95c41f974633",
+    "from": "0x26bce6ecb5b10138e4bf14ac0ffcc8727fef3b2e",
+    "gas_price": 1215.31
   },
   "addresses": [
-    "0x3462d4f128e214f09a5483ab2613fbf13cd4e57e",
-    "0x59728544b08ab483533076417fbbb2fd0b17ce3a"
-  ]
-}
-```
-
-```
-{
-  "name": "Tremendous increase in gas price",
-  "description": "A large increase in gas prices from the previous block..",
-  "alert_id": "GAS-DETECT-TCD",
-  "severity": "High",
-  "type": "Suspicious",
-  "metadata": {
-    "block_number": 14725906,
-    "tx_hash": "0xac86ea96140a9dcdb6dfca0341177dc216b102a9adb7ee93b8cbd373d94acbef",
-    "from": "0xa08200ccf97b4dd994c6e2a08d117a4ac27260c1",
-    "gas_price": 5000
-  },
-  "addresses": [
-    "0xa08200ccf97b4dd994c6e2a08d117a4ac27260c1",
-    "0x30bbdfd29b90a320a447875a75a5d32d23fa763b"
+    "0x26bce6ecb5b10138e4bf14ac0ffcc8727fef3b2e",
+    "0x4cb18386e5d1f34dc6eea834bf3534a970a3f8e7"
   ]
 }
 ```
