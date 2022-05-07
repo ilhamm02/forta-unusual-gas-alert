@@ -70,8 +70,6 @@ def handle_transaction(transaction_event):
                         ]
                     }))
                     
-                    test.append(transaction_event.hash)
-                    
         if len(findings) == 0:
             block_index = 0
             while GAS_HISTORY[block_index]["block_number"] != block_number:
