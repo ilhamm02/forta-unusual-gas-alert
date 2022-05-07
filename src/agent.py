@@ -1,5 +1,4 @@
 import math, statistics
-from turtle import clear
 from forta_agent import Finding, FindingType, FindingSeverity
 
 BLOCK_LIMIT = 2
